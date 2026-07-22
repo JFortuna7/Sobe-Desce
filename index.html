@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sobe e Desce — Bloco de Contagem</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt-dark:#0f3324;
+  --felt:#164a34;
+  --felt-light:#1f6444;
+  --chalk:#f3efe3;
+  --chalk-dim:#c7d2c9;
+  --gold:#d8a53d;
+  --gold-dark:#a9791f;
+  --hearts:#d1495b;
+  --ink:#0a2016;
+  --danger:#b3432b;
+  --line:rgba(243,239,227,0.14);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  color:var(--chalk);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.035), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03), transparent 45%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.25), transparent 60%),
+    linear-gradient(160deg, var(--felt-dark), var(--felt) 55%, var(--felt-dark));
+  min-height:100vh;
+  background-attachment:fixed;
+}
+.app-shell{max-width:960px;margin:0 auto;padding:20px 16px 80px;}
+.app-header{
+  display:flex; align-items:center; gap:14px;
+  padding:10px 4px 22px;
+  border-bottom:1px dashed var(--line);
+  margin-bottom:26px;
+}
+.home-btn{
+  width:42px;height:42px;border-radius:50%;
+  background:rgba(243,239,227,0.08);
+  border:1px solid var(--line);
+  color:var(--chalk); font-size:18px; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  transition:background .15s ease, transform .15s ease;
+}
+.home-btn:hover{background:rgba(243,239,227,0.16); transform:translateY(-1px);}
+.app-header h1{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+  font-size:clamp(28px,5vw,38px);
+  margin:0; color:var(--chalk);
+}
+.app-header .sub{
+  display:block; font-family:'Kalam',cursive; font-weight:400;
+  text-transform:none; letter-spacing:0; font-size:14px; color:var(--gold);
+  margin-top:2px;
+}
+.view{display:none; animation:fadeIn .35s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.section-title{
+  font-family:'Barlow Condensed',sans-serif; text-transform:uppercase;
+  letter-spacing:.05em; font-weight:700; font-size:22px; color:var(--gold);
+  margin:0 0 16px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-title .tag{
+  font-family:'Kalam',cursive; font-size:13px; color:var(--chalk-dim);
+  text-transform:none; letter-spacing:0; font-weight:400;
+}
+
+/* HOME CARDS */
+.home-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px;}
+@media (max-width:560px){.home-grid{grid-template-columns:1fr;}}
+.home-card{
+  position:relative;
+  background:linear-gradient(160deg, rgba(0,0,0,0.18), rgba(0,0,0,0.06));
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:22px 20px;
+  cursor:pointer;
+  text-align:left;
+  transition:transform .18s ease, border-color .18s ease, background .18s ease;
+  overflow:hidden;
+}
+.home-card::after{
+  content:attr(data-suit);
+  position:absolute; right:10px; top:2px;
+  font-size:54px; opacity:.08; font-family:'Kalam',cursive;
+}
+.home-card:hover{transform:translateY(-3px); border-color:var(--gold); background:linear-gradient(160deg, rgba(216,165,61,0.1), rgba(0,0,0,0.08));}
+.home-card h3{
+  font-family:'Barlow Condensed',sans-serif; text-transform:uppercase;
+  letter-spacing:.04em; font-size:22px; margin:0 0 6px; color:var(--chalk);
+}
+.home-card p{margin:0; color:var(--chalk-dim); font-size:14px; line-height:1.4;}
+.home-card .chalk-num{
+  font-family:'Kalam',cursive; color:var(--gold); font-size:15px; margin-bottom:6px; display:block;
+}
+
+/* BUTTONS */
+.btn{
+  font-family:'Inter',sans-serif; font-weight:600; font-size:14.5px;
+  border-radius:8px; border:1px solid var(--line); cursor:pointer;
+  padding:11px 18px; color:var(--chalk); background:rgba(243,239,227,0.06);
+  transition:transform .12s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover:not(:disabled){transform:translateY(-1px); border-color:var(--gold);}
+.btn:disabled{opacity:.35; cursor:not-allowed;}
+.btn-gold{background:linear-gradient(160deg, var(--gold), var(--gold-dark)); color:var(--ink); border-color:transparent; font-weight:700;}
+.btn-gold:hover:not(:disabled){filter:brightness(1.06);}
+.btn-danger{background:rgba(179,67,43,0.18); border-color:rgba(179,67,43,0.5); color:#f3d9d0;}
+.btn-block{width:100%; text-align:center;}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* PILL / CHECK */
+.pill-group{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;}
+.pill{
+  padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+  background:rgba(243,239,227,0.05); cursor:pointer; font-size:14px; font-weight:600;
+  transition:all .15s ease;
+}
+.pill.active{background:var(--gold); color:var(--ink); border-color:var(--gold);}
+.check-pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px; border:1px solid var(--line);
+  background:rgba(243,239,227,0.04); cursor:pointer; font-size:14px; margin:0 8px 8px 0;
+  transition:all .15s ease;
+}
+.check-pill.checked{border-color:var(--gold); background:rgba(216,165,61,0.14);}
+.check-pill input{accent-color:var(--gold);}
+
+.panel{
+  background:rgba(0,0,0,0.16); border:1px solid var(--line); border-radius:12px;
+  padding:20px; margin-bottom:18px;
+}
+label.field-label{display:block; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--chalk-dim); margin-bottom:8px; font-weight:600;}
+input[type=text]{
+  background:rgba(243,239,227,0.06); border:1px solid var(--line); border-radius:8px;
+  padding:10px 12px; color:var(--chalk); font-family:'Inter',sans-serif; font-size:14.5px;
+}
+input[type=text]:focus, .btn:focus-visible, .pill:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+.inline-add{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.warn{color:#f0c56b; font-size:13.5px; margin-top:8px;}
+.empty-note{color:var(--chalk-dim); font-family:'Kalam',cursive; font-size:16px;}
+
+/* SCORE TABLE (chalkboard) */
+.board-wrap{
+  background:radial-gradient(ellipse at top, rgba(255,255,255,0.03), transparent 60%), #0c2a1c;
+  border:1px solid rgba(243,239,227,0.15); border-radius:12px; padding:16px;
+  box-shadow:inset 0 0 40px rgba(0,0,0,0.4);
+  overflow-x:auto; margin-bottom:16px;
+}
+table.score-table{border-collapse:collapse; width:100%; min-width:340px;}
+table.score-table th, table.score-table td{
+  font-family:'Kalam',cursive; text-align:center; padding:8px 12px; font-size:19px;
+  border-bottom:1px dashed rgba(243,239,227,0.18);
+}
+table.score-table th{
+  font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.03em;
+  font-size:15px; color:var(--gold); font-weight:700; border-bottom:1px solid rgba(243,239,227,0.3);
+}
+table.score-table th:first-child, table.score-table td:first-child{text-align:left; color:var(--chalk-dim); font-size:16px;}
+table.score-table tr.start-row td{color:var(--chalk-dim); font-style:italic;}
+table.score-table tr.last-row td{color:var(--chalk); font-weight:700;}
+@keyframes rowFlash{from{background:rgba(216,165,61,0.25);} to{background:transparent;}}
+.flash-row td{animation:rowFlash 1.1s ease;}
+.suit-badge{font-size:18px;}
+.moon{font-size:12px; vertical-align:super;}
+
+/* SUIT CHOICE */
+.suit-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px;}
+.suit-btn{
+  background:rgba(243,239,227,0.05); border:1px solid var(--line); border-radius:10px;
+  padding:16px 10px; cursor:pointer; text-align:center; transition:all .15s ease;
+}
+.suit-btn:hover{border-color:var(--gold); transform:translateY(-2px);}
+.suit-btn .glyph{font-size:34px; display:block; margin-bottom:6px;}
+.suit-btn .name{font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; font-size:14px; letter-spacing:.03em; font-weight:700;}
+.suit-btn.hearts .glyph, .suit-btn.hearts .name{color:var(--hearts);}
+
+/* ENTRY PANEL */
+.entry-card{
+  border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px;
+  background:rgba(0,0,0,0.14);
+}
+.entry-card .p-name{font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.03em; font-size:17px; color:var(--chalk); margin-bottom:4px; font-weight:700;}
+.entry-card .p-score{font-family:'Kalam',cursive; color:var(--gold); font-size:14px; margin-bottom:10px;}
+.choice-row{display:flex; gap:8px; flex-wrap:wrap;}
+.choice-btn{
+  padding:8px 14px; border-radius:8px; border:1px solid var(--line); cursor:pointer;
+  background:rgba(243,239,227,0.05); font-weight:600; font-size:14px; color:var(--chalk);
+  transition:all .15s ease;
+}
+.choice-btn.selected{background:var(--gold); color:var(--ink); border-color:var(--gold);}
+.choice-btn:disabled{opacity:.28; cursor:not-allowed;}
+.forced-note{font-size:12px; color:#e08a8a; margin-top:6px; font-family:'Inter',sans-serif;}
+
+.winner-banner{
+  font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.03em;
+  background:linear-gradient(160deg, var(--gold), var(--gold-dark)); color:var(--ink);
+  padding:18px; border-radius:10px; font-size:22px; font-weight:700; text-align:center;
+  margin-bottom:16px;
+}
+
+/* RANKING TABLE */
+table.rank-table{border-collapse:collapse; width:100%; margin-bottom:22px;}
+table.rank-table th, table.rank-table td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--line); font-size:14.5px;}
+table.rank-table th{color:var(--gold); font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.03em; font-size:14px;}
+table.rank-table td.num{text-align:center;}
+
+.player-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px;}
+.player-card{
+  background:rgba(0,0,0,0.14); border:1px solid var(--line); border-radius:10px; padding:14px;
+  cursor:pointer; transition:all .15s ease; position:relative;
+}
+.player-card:hover{border-color:var(--gold); transform:translateY(-2px);}
+.player-card .pc-name{font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; font-weight:700; font-size:17px; margin-bottom:4px; padding-right:20px;}
+.player-card .pc-stat{font-size:13px; color:var(--chalk-dim);}
+.pc-delete{
+  position:absolute; top:8px; right:8px; background:none; border:none;
+  color:var(--chalk-dim); font-size:17px; line-height:1; cursor:pointer; padding:2px 4px;
+}
+.pc-delete:hover{color:var(--danger);}
+
+/* HISTORY */
+.history-item{
+  background:rgba(0,0,0,0.14); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:all .15s ease;
+  display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.history-item:hover{border-color:var(--gold);}
+.history-item .h-date{font-size:12.5px; color:var(--chalk-dim);}
+.history-item .h-players{font-size:14px; color:var(--chalk);}
+.history-item .h-winner{font-family:'Kalam',cursive; color:var(--gold); font-size:16px;}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(5,15,10,0.72); backdrop-filter:blur(2px);
+  display:flex; align-items:center; justify-content:center; padding:16px; z-index:50;
+}
+.modal-overlay.hidden{display:none;}
+.modal-box{
+  background:linear-gradient(160deg, var(--felt), var(--felt-dark)); border:1px solid var(--line);
+  border-radius:12px; padding:22px; max-width:640px; width:100%; max-height:85vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-close{float:right; background:none; border:none; color:var(--chalk-dim); font-size:20px; cursor:pointer;}
+.modal-close:hover{color:var(--gold);}
+
+/* SUECA */
+.sueca-team{margin-bottom:26px;}
+.sueca-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.sueca-name-input{
+  font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.03em;
+  font-size:20px; font-weight:700; color:var(--chalk); background:transparent; border:none;
+  border-bottom:1px dashed var(--line); padding:4px 2px; max-width:60%;
+}
+.sueca-name-input:focus{outline:none; border-bottom-color:var(--gold);}
+.sueca-count{font-family:'Kalam',cursive; color:var(--gold); font-size:17px;}
+.sueca-track{
+  display:flex; flex-wrap:wrap; gap:6px; background:rgba(0,0,0,0.14);
+  border:1px solid var(--line); border-radius:10px; padding:12px;
+}
+.sueca-mark{
+  width:30px; height:30px; border-radius:6px; border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  font-family:'Kalam',cursive; font-size:14px; color:var(--chalk-dim);
+  background:rgba(243,239,227,0.04); transition:all .12s ease; user-select:none;
+}
+.sueca-mark:hover{border-color:var(--gold);}
+.sueca-mark.filled{background:var(--gold); border-color:var(--gold); color:var(--ink); font-weight:700;}
+.sueca-mark.milestone{border-color:rgba(216,165,61,0.55);}
+.sueca-team.won .sueca-name-input{color:var(--gold);}
+.sueca-win-tag{font-family:'Kalam',cursive; color:var(--gold); font-size:14px; margin-left:8px;}
+
+.data-btns{display:flex; gap:12px; flex-wrap:wrap;}
+.heart{font-size:18px; margin-right:3px; display:inline-block;}
+.heart.filled{color:var(--hearts);}
+.heart.empty{color:rgba(243,239,227,0.22);}
+.eliminated-note{font-size:13px; color:var(--chalk-dim); margin-bottom:12px; font-family:'Kalam',cursive;}
+footer.foot-note{margin-top:34px; text-align:center; color:var(--chalk-dim); font-size:12.5px; font-family:'Kalam',cursive;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <button id="btn-home" class="home-btn" onclick="goHome()" title="Menu principal">&#8962;</button>
+    <div>
+      <h1>Sobe e Desce</h1>
+      <span class="sub">o bloco de contagem do café</span>
+    </div>
+  </header>
+
+  <main id="views">
+
+    <section id="view-home" class="view active">
+      <div class="home-grid">
+        <div class="home-card" data-suit="&#9824;" onclick="openNewGame()">
+          <span class="chalk-num">criar mesa</span>
+          <h3>Novo Jogo</h3>
+          <p>Escolhe os jogadores, os pontos iniciais e o modo, e começa a marcar.</p>
+        </div>
+        <div class="home-card" data-suit="&#9827;" onclick="navPlayers()">
+          <span class="chalk-num">quem manda na mesa</span>
+          <h3>Jogadores</h3>
+          <p>Perfis, classificação geral e taxa de vitórias de cada um.</p>
+        </div>
+        <div class="home-card" data-suit="&#9830;" onclick="navHistory()">
+          <span class="chalk-num">jogos passados</span>
+          <h3>Histórico</h3>
+          <p>Consulta jogos anteriores e a tabela completa de cada um.</p>
+        </div>
+        <div class="home-card" data-suit="&#9829;" onclick="navData()">
+          <span class="chalk-num">guardar &amp; levar</span>
+          <h3>Dados</h3>
+          <p>Exporta ou importa os teus dados guardados localmente.</p>
+        </div>
+        <div class="home-card" data-suit="&#9824;&#9830;" onclick="navSueca()">
+          <span class="chalk-num">linha até aos 20</span>
+          <h3>Sueca</h3>
+          <p>Escolhe as duplas e marca os pontos até uma equipa chegar aos 20.</p>
+        </div>
+        <div class="home-card" data-suit="65-120" onclick="navItaliana()">
+          <span class="chalk-num">chama o número e o par</span>
+          <h3>Sueca Italiana</h3>
+          <p>5 jogadores, um número de 65 a 120 por ronda e quem chamou vs os outros 3.</p>
+        </div>
+        <div class="home-card" data-suit="&#10084;" onclick="navAposta()">
+          <span class="chalk-num">quantas cartas aguentas?</span>
+          <h3>Apostas</h3>
+          <p>Cartas sobem e descem a cada ronda, quem inchar perde uma vida.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-new-game" class="view">
+      <h2 class="section-title">Novo Jogo <span class="tag">quem se senta à mesa?</span></h2>
+      <div class="panel">
+        <label class="field-label">Jogadores</label>
+        <div id="ng-players"></div>
+        <div class="inline-add">
+          <input type="text" id="ng-new-name" placeholder="Nome do novo jogador">
+          <button class="btn" onclick="quickAddPlayer()">+ Adicionar</button>
+        </div>
+        <div id="ng-warn" class="warn" style="display:none;">Escolhe pelo menos 2 jogadores.</div>
+      </div>
+
+      <div class="panel">
+        <label class="field-label">Pontos iniciais</label>
+        <div class="pill-group" id="ng-points">
+          <div class="pill" data-val="20" onclick="setNGPoints(20)">20 pontos</div>
+          <div class="pill" data-val="30" onclick="setNGPoints(30)">30 pontos</div>
+        </div>
+        <label class="field-label">Modo de jogo</label>
+        <div class="pill-group" id="ng-mode">
+          <div class="pill" data-val="classico" onclick="setNGMode('classico')">Clássico</div>
+          <div class="pill" data-val="rebentar" onclick="setNGMode('rebentar')">Rebentar</div>
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-block" onclick="startNewGame()">Começar Jogo</button>
+    </section>
+
+    <section id="view-game" class="view">
+      <div id="game-cancel-row" style="margin-bottom:12px;"></div>
+      <div id="game-root"></div>
+    </section>
+
+    <section id="view-players" class="view">
+      <h2 class="section-title">Jogadores <span class="tag">quem ganha mais, quem paga o café</span></h2>
+      <div class="panel">
+        <label class="field-label">Criar perfil</label>
+        <div class="inline-add">
+          <input type="text" id="pl-new-name" placeholder="Nome do jogador">
+          <button class="btn btn-gold" onclick="createPlayerFromPage()">Criar Jogador</button>
+        </div>
+      </div>
+      <h3 class="section-title" style="font-size:18px;">Classificação</h3>
+      <div id="rank-table-wrap"></div>
+      <h3 class="section-title" style="font-size:18px;">Perfis</h3>
+      <div id="player-cards-wrap" class="player-cards"></div>
+    </section>
+
+    <section id="view-history" class="view">
+      <h2 class="section-title">Histórico <span class="tag">jogos já marcados</span></h2>
+      <div id="history-list"></div>
+    </section>
+
+    <section id="view-sueca" class="view">
+      <h2 class="section-title">Sueca <span class="tag">escolhe as equipas e vai marcando</span></h2>
+      <div id="sueca-game-root"></div>
+      <h3 class="section-title" style="font-size:18px;">Classificação (Sueca)</h3>
+      <div id="sueca-rank-wrap"></div>
+    </section>
+
+    <section id="view-italiana" class="view">
+      <h2 class="section-title">Sueca Italiana <span class="tag">5 jogadores, um número por ronda</span></h2>
+      <div id="italiana-game-root"></div>
+      <h3 class="section-title" style="font-size:18px;">Classificação (Sueca Italiana)</h3>
+      <div id="italiana-rank-wrap"></div>
+    </section>
+
+    <section id="view-aposta" class="view">
+      <h2 class="section-title">Apostas <span class="tag">as cartas sobem e descem, cuidado para não inchar</span></h2>
+      <div id="aposta-game-root"></div>
+      <h3 class="section-title" style="font-size:18px;">Classificação (Apostas)</h3>
+      <div id="aposta-rank-wrap"></div>
+    </section>
+
+    <section id="view-data" class="view">
+      <h2 class="section-title">Dados <span class="tag">tudo fica guardado neste dispositivo</span></h2>
+      <div class="panel">
+        <p style="margin-top:0; color:var(--chalk-dim); font-size:14px;">Os dados ficam guardados localmente no navegador. Exporta um ficheiro para levar contigo ou fazer cópia de segurança; ao importar, os dados são somados aos que já tens (nunca substituídos).</p>
+        <div class="data-btns">
+          <button class="btn btn-gold" onclick="exportData()">Exportar dados</button>
+          <button class="btn" onclick="document.getElementById('import-file').click()">Importar dados</button>
+          <input type="file" id="import-file" accept="application/json" style="display:none" onchange="handleImportFile(event)">
+        </div>
+        <div id="import-status" style="margin-top:12px; font-size:14px;"></div>
+      </div>
+      <div class="panel">
+        <label class="field-label">Zona perigosa</label>
+        <p style="margin-top:0; color:var(--chalk-dim); font-size:14px;">Isto apaga todos os jogadores, jogos de Sobe e Desce e jogos de Sueca guardados neste dispositivo. Não pode ser desfeito — exporta primeiro se quiseres guardar uma cópia.</p>
+        <button class="btn btn-danger" onclick="clearAllData()">Apagar todos os dados</button>
+      </div>
+      <div class="panel">
+        <div id="data-summary"></div>
+      </div>
+    </section>
+
+  </main>
+  <footer class="foot-note">feito para as mesas de café — boa sorte nas cartas</footer>
+</div>
+
+<div id="modal-overlay" class="modal-overlay hidden" onclick="if(event.target===this) closeModal()">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<script>
+/* ---------- DATA LAYER ---------- */
+const SUITS = {
+  espadas:      { label:'Espadas',        symbol:'&#9824;', mult:1, cls:'' },
+  paus:         { label:'Paus',           symbol:'&#9827;', mult:1, cls:'' },
+  ouros:        { label:'Ouros',          symbol:'&#9830;', mult:1, cls:'' },
+  copas:        { label:'Copas',          symbol:'&#9829;', mult:2, cls:'hearts' },
+  copasEscuro:  { label:'Copas no Escuro',symbol:'&#9829;', mult:3, cls:'hearts', dark:true }
+};
+
+function uid(){ return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9); }
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem('sdb_data');
+    if(!raw) return { players:[], games:[], suecaGames:[], suecaItalianaGames:[], apostaGames:[] };
+    const parsed = JSON.parse(raw);
+    return { players: parsed.players||[], games: parsed.games||[], suecaGames: parsed.suecaGames||[], suecaItalianaGames: parsed.suecaItalianaGames||[], apostaGames: parsed.apostaGames||[] };
+  }catch(e){ return { players:[], games:[], suecaGames:[], suecaItalianaGames:[], apostaGames:[] }; }
+}
+function saveDB(){ localStorage.setItem('sdb_data', JSON.stringify(DB)); }
+
+function loadOngoing(){
+  try{
+    const raw = localStorage.getItem('sdb_ongoing');
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.state || !parsed.scores || !parsed.skipped){
+      localStorage.removeItem('sdb_ongoing');
+      return null;
+    }
+    return parsed;
+  }catch(e){ return null; }
+}
+function saveOngoing(){
+  if(ongoing) localStorage.setItem('sdb_ongoing', JSON.stringify(ongoing));
+  else localStorage.removeItem('sdb_ongoing');
+}
+
+let DB = loadDB();
+let ongoing = loadOngoing();
+let newGameSetup = { selected:new Set(), points:30, mode:'classico' };
+
+function getPlayerName(id){
+  const p = DB.players.find(x=>x.id===id);
+  return p ? p.name : '—';
+}
+
+/* ---------- NAV ---------- */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('btn-home').style.display = (id==='view-home') ? 'none' : 'inline-flex';
+  window.scrollTo(0,0);
+}
+function goHome(){ showView('view-home'); }
+function navPlayers(){ renderPlayers(); showView('view-players'); }
+function navHistory(){ renderHistory(); showView('view-history'); }
+function navData(){ renderDataView(); showView('view-data'); }
+function navSueca(){ renderSueca(); showView('view-sueca'); }
+function navItaliana(){ renderItaliana(); showView('view-italiana'); }
+function navAposta(){ renderAposta(); showView('view-aposta'); }
+function openNewGame(){
+  if(ongoing && !ongoing.finished){ renderGame(); showView('view-game'); return; }
+  newGameSetup = { selected:new Set(), points:30, mode:'classico' };
+  renderNewGame();
+  showView('view-new-game');
+}
+
+/* ---------- PLAYERS ---------- */
+function addPlayer(name){
+  const clean = (name||'').trim();
+  if(!clean) return null;
+  const p = { id:uid(), name:clean, wins:0, losses:0, suecaWins:0, suecaLosses:0, italianaWins:0, italianaLosses:0, apostaWins:0, apostaLosses:0 };
+  DB.players.push(p);
+  saveDB();
+  return p;
+}
+function deletePlayer(id){
+  const p = DB.players.find(x=>x.id===id);
+  if(!p) return;
+  showConfirm('Eliminar "'+p.name+'"? Esta ação não pode ser desfeita e as suas estatísticas serão perdidas.', function(){
+    DB.players = DB.players.filter(x=>x.id!==id);
+    saveDB();
+    renderPlayers();
+  });
+}
+function quickAddPlayer(){
+  const input = document.getElementById('ng-new-name');
+  const p = addPlayer(input.value);
+  if(p){ newGameSetup.selected.add(p.id); input.value=''; renderNewGame(); }
+}
+function createPlayerFromPage(){
+  const input = document.getElementById('pl-new-name');
+  const p = addPlayer(input.value);
+  if(p){ input.value=''; renderPlayers(); }
+}
+function toggleNGPlayer(id){
+  if(newGameSetup.selected.has(id)) newGameSetup.selected.delete(id);
+  else newGameSetup.selected.add(id);
+  renderNewGame();
+}
+function setNGPoints(v){ newGameSetup.points = v; renderNewGame(); }
+function setNGMode(v){ newGameSetup.mode = v; renderNewGame(); }
+
+function renderNewGame(){
+  const wrap = document.getElementById('ng-players');
+  if(DB.players.length===0){
+    wrap.innerHTML = '<p class="empty-note">Ainda não há jogadores criados — adiciona o primeiro em baixo.</p>';
+  }else{
+    wrap.innerHTML = DB.players.map(p=>{
+      const checked = newGameSetup.selected.has(p.id);
+      return '<label class="check-pill'+(checked?' checked':'')+'"><input type="checkbox" '+(checked?'checked':'')+' onchange="toggleNGPlayer(\''+p.id+'\')"> '+escapeHtml(p.name)+'</label>';
+    }).join('');
+  }
+  document.querySelectorAll('#ng-points .pill').forEach(el=>{
+    el.classList.toggle('active', Number(el.dataset.val)===newGameSetup.points);
+  });
+  document.querySelectorAll('#ng-mode .pill').forEach(el=>{
+    el.classList.toggle('active', el.dataset.val===newGameSetup.mode);
+  });
+  document.getElementById('ng-warn').style.display = 'none';
+}
+function startNewGame(){
+  if(newGameSetup.selected.size < 2){
+    document.getElementById('ng-warn').style.display = 'block';
+    return;
+  }
+  const playerIds = Array.from(newGameSetup.selected);
+  const scores = {}; const skipped = {};
+  playerIds.forEach(id=>{ scores[id]=newGameSetup.points; skipped[id]=false; });
+  ongoing = {
+    id: uid(),
+    date: new Date().toISOString(),
+    playerIds,
+    startingPoints: newGameSetup.points,
+    mode: newGameSetup.mode,
+    scores, skipped,
+    rounds: [],
+    state: 'idle',
+    currentSuit: null,
+    currentEntries: {},
+    finished: false,
+    winnerId: null
+  };
+  saveOngoing();
+  renderGame();
+  showView('view-game');
+}
+
+/* ---------- GAME PLAY ---------- */
+function suitBadge(key){
+  const s = SUITS[key];
+  if(!s) return '';
+  const moon = s.dark ? ' <span class="moon">&#127769;</span>' : '';
+  return '<span class="suit-badge '+s.cls+'">'+s.symbol+moon+'</span>';
+}
+function usedPointsExcluding(pid){
+  let total = 0;
+  Object.keys(ongoing.currentEntries).forEach(k=>{
+    if(k===pid) return;
+    const e = ongoing.currentEntries[k];
+    if(e && e.type==='pontos') total += e.value;
+  });
+  return total;
+}
+function usedPointsAll(){
+  let total = 0;
+  Object.values(ongoing.currentEntries).forEach(e=>{ if(e && e.type==='pontos') total += e.value; });
+  return total;
+}
+function startRound(){ ongoing.state='choosing_suit'; saveOngoing(); renderGame(); }
+function cancelGame(){
+  showConfirm('Cancelar este jogo sem guardar no histórico?', function(){
+    ongoing = null; localStorage.removeItem('sdb_ongoing');
+    showView('view-home');
+  });
+}
+function chooseSuit(key){
+  ongoing.currentSuit = key;
+  ongoing.state = 'entering';
+  ongoing.currentEntries = {};
+  saveOngoing();
+  renderGame();
+}
+function setEntry(pid, type, value){
+  const forcedNaofoi = isForcedPlay(pid);
+  if(type==='naofoi' && forcedNaofoi) return;
+  if(type==='pontos'){
+    const remaining = 5 - usedPointsExcluding(pid);
+    if(value > remaining) return;
+  }
+  ongoing.currentEntries[pid] = { type, value: value||0 };
+  if(type==='pontos' && usedPointsAll() >= 5){
+    ongoing.playerIds.forEach(id=>{
+      if(!ongoing.currentEntries[id]) ongoing.currentEntries[id] = { type:'lerpou', value:0 };
+    });
+  }
+  saveOngoing();
+  renderGame();
+}
+function isForcedPlay(pid){
+  if(ongoing.currentSuit === 'paus') return true;
+  if(ongoing.scores[pid] <= 10) return true;
+  if(ongoing.skipped[pid] === true) return true;
+  return false;
+}
+function allEntriesSet(){
+  return ongoing.playerIds.every(pid => !!ongoing.currentEntries[pid]);
+}
+function finishRound(){
+  if(!allEntriesSet()) return;
+  const suitInfo = SUITS[ongoing.currentSuit];
+  const resultScores = {};
+  ongoing.playerIds.forEach(pid=>{
+    const entry = ongoing.currentEntries[pid];
+    const current = ongoing.scores[pid];
+    let newScore;
+    if(entry.type === 'naofoi'){
+      newScore = current;
+    } else if(entry.type === 'lerpou'){
+      newScore = current + (5 * suitInfo.mult);
+    } else {
+      const delta = entry.value * suitInfo.mult;
+      let candidate = current - delta;
+      if(ongoing.mode === 'rebentar' && candidate < 0) candidate = current;
+      newScore = candidate;
+    }
+    resultScores[pid] = newScore;
+    ongoing.skipped[pid] = (entry.type === 'naofoi');
+  });
+  ongoing.rounds.push({ suit: ongoing.currentSuit, entries: ongoing.currentEntries, resultScores });
+  ongoing.scores = resultScores;
+  ongoing.currentSuit = null;
+  ongoing.currentEntries = {};
+  ongoing.state = 'idle';
+
+  let winnerId = null;
+  for(const pid of ongoing.playerIds){
+    const s = ongoing.scores[pid];
+    if(ongoing.mode === 'classico' && s <= 0){ winnerId = pid; break; }
+    if(ongoing.mode === 'rebentar' && s === 0){ winnerId = pid; break; }
+  }
+
+  if(winnerId){
+    ongoing.finished = true;
+    ongoing.winnerId = winnerId;
+    const gameRecord = JSON.parse(JSON.stringify(ongoing));
+    DB.games.push(gameRecord);
+    ongoing.playerIds.forEach(pid=>{
+      const p = DB.players.find(x=>x.id===pid);
+      if(!p) return;
+      if(pid===winnerId) p.wins++; else p.losses++;
+    });
+    saveDB();
+    localStorage.removeItem('sdb_ongoing');
+  } else {
+    saveOngoing();
+  }
+  renderGame();
+}
+function backToMenuFromGame(){ ongoing = null; showView('view-home'); }
+
+function buildScoreTableHTML(game){
+  const rows = [];
+  rows.push('<tr class="start-row"><td>Início</td>' + game.playerIds.map(id=>'<td>'+game.startingPoints+'</td>').join('') + '</tr>');
+  game.rounds.forEach((r, idx)=>{
+    const isLast = idx === game.rounds.length - 1;
+    rows.push('<tr class="'+(isLast?'last-row flash-row':'')+'"><td>'+suitBadge(r.suit)+'</td>' +
+      game.playerIds.map(id=>'<td>'+r.resultScores[id]+'</td>').join('') + '</tr>');
+  });
+  return '<div class="board-wrap"><table class="score-table"><thead><tr><th>Ronda</th>' +
+    game.playerIds.map(id=>'<th>'+escapeHtml(getPlayerNameFromGame(game,id))+'</th>').join('') +
+    '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
+}
+function getPlayerNameFromGame(game, id){
+  return getPlayerName(id);
+}
+
+function renderGame(){
+  const root = document.getElementById('game-root');
+  const cancelRow = document.getElementById('game-cancel-row');
+  if(!ongoing){ root.innerHTML=''; cancelRow.innerHTML=''; return; }
+
+  cancelRow.innerHTML = ongoing.finished ? '' :
+    '<button class="btn btn-danger" onclick="cancelGame()">Cancelar jogo</button>';
+
+  let html = '<h2 class="section-title">Jogo em curso <span class="tag">' +
+    (ongoing.mode==='rebentar' ? 'modo rebentar' : 'modo clássico') + ' &middot; começou com ' + ongoing.startingPoints + '</span></h2>';
+
+  html += buildScoreTableHTML(ongoing);
+
+  if(ongoing.finished){
+    html += '<div class="winner-banner">&#127942; ' + escapeHtml(getPlayerName(ongoing.winnerId)) + ' venceu o jogo!</div>';
+    html += '<button class="btn btn-gold btn-block" onclick="backToMenuFromGame()">Voltar ao Menu</button>';
+  } else if(ongoing.state === 'idle'){
+    html += '<button class="btn btn-gold btn-block" onclick="startRound()">Iniciar Ronda</button>';
+  } else if(ongoing.state === 'choosing_suit'){
+    html += '<div class="panel"><label class="field-label">A que naipe vamos jogar?</label><div class="suit-grid">';
+    Object.keys(SUITS).forEach(key=>{
+      const s = SUITS[key];
+      const moon = s.dark ? ' <span class="moon">&#127769;</span>' : '';
+      html += '<div class="suit-btn '+s.cls+'" onclick="chooseSuit(\''+key+'\')">' +
+        '<span class="glyph">'+s.symbol+moon+'</span><span class="name">'+s.label+'</span></div>';
+    });
+    html += '</div></div>';
+  } else if(ongoing.state === 'entering'){
+    html += '<div class="panel"><label class="field-label">Naipe: </label> ' + suitBadge(ongoing.currentSuit) + ' ' + SUITS[ongoing.currentSuit].label + '</div>';
+    ongoing.playerIds.forEach(pid=>{
+      const entry = ongoing.currentEntries[pid];
+      const remaining = 5 - usedPointsExcluding(pid);
+      const forced = isForcedPlay(pid);
+      html += '<div class="entry-card"><div class="p-name">'+escapeHtml(getPlayerName(pid))+'</div>' +
+        '<div class="p-score">pontos atuais: '+ongoing.scores[pid]+'</div><div class="choice-row">';
+      for(let k=1;k<=5;k++){
+        const disabled = k > remaining;
+        const selected = entry && entry.type==='pontos' && entry.value===k;
+        html += '<button class="choice-btn'+(selected?' selected':'')+'" '+(disabled?'disabled':'')+' onclick="setEntry(\''+pid+'\',\'pontos\','+k+')">'+k+'</button>';
+      }
+      const lerpouSel = entry && entry.type==='lerpou';
+      html += '<button class="choice-btn'+(lerpouSel?' selected':'')+'" onclick="setEntry(\''+pid+'\',\'lerpou\')">Lerpou</button>';
+      const naofoiSel = entry && entry.type==='naofoi';
+      html += '<button class="choice-btn'+(naofoiSel?' selected':'')+'" '+(forced?'disabled':'')+' onclick="setEntry(\''+pid+'\',\'naofoi\')">Não foi a jogo</button>';
+      html += '</div>';
+      if(forced) html += '<div class="forced-note">É obrigado a ir a jogo nesta ronda.</div>';
+      html += '</div>';
+    });
+    const canFinish = allEntriesSet();
+    html += '<button class="btn btn-gold btn-block" '+(canFinish?'':'disabled')+' onclick="finishRound()">Ronda Terminada</button>';
+  }
+
+  root.innerHTML = html;
+}
+
+/* ---------- PLAYERS VIEW ---------- */
+function renderPlayers(){
+  const rankWrap = document.getElementById('rank-table-wrap');
+  const cardsWrap = document.getElementById('player-cards-wrap');
+  if(DB.players.length===0){
+    rankWrap.innerHTML = '<p class="empty-note">Sem jogadores ainda. Cria o primeiro perfil acima.</p>';
+    cardsWrap.innerHTML = '';
+    return;
+  }
+  const sorted = [...DB.players].sort((a,b)=>{
+    const wa = a.wins+a.losses ? a.wins/(a.wins+a.losses) : -1;
+    const wb = b.wins+b.losses ? b.wins/(b.wins+b.losses) : -1;
+    return wb - wa;
+  });
+  let rows = sorted.map(p=>{
+    const total = p.wins + p.losses;
+    const rate = total ? ((p.wins/total)*100).toFixed(1) + '%' : '—';
+    return '<tr><td>'+escapeHtml(p.name)+'</td><td class="num">'+p.wins+'</td><td class="num">'+total+'</td><td class="num">'+rate+'</td></tr>';
+  }).join('');
+  rankWrap.innerHTML = '<table class="rank-table"><thead><tr><th>Jogador</th><th class="num">Vitórias</th><th class="num">Jogos totais</th><th class="num">Win rate</th></tr></thead><tbody>'+rows+'</tbody></table>';
+
+  cardsWrap.innerHTML = DB.players.map(p=>{
+    const total = p.wins+p.losses;
+    const rate = total ? ((p.wins/total)*100).toFixed(1)+'%' : '—';
+    return '<div class="player-card" onclick="openPlayerDetail(\''+p.id+'\')">' +
+      '<button class="pc-delete" onclick="event.stopPropagation(); deletePlayer(\''+p.id+'\')" title="Eliminar jogador">&times;</button>' +
+      '<div class="pc-name">'+escapeHtml(p.name)+'</div>' +
+      '<div class="pc-stat">'+total+' jogos &middot; '+rate+'</div></div>';
+  }).join('');
+}
+function openPlayerDetail(id){
+  const p = DB.players.find(x=>x.id===id);
+  if(!p) return;
+  const total = p.wins + p.losses;
+  const rate = total ? ((p.wins/total)*100).toFixed(1)+'%' : '—';
+  const sTotal = (p.suecaWins||0) + (p.suecaLosses||0);
+  const sRate = sTotal ? (((p.suecaWins||0)/sTotal)*100).toFixed(1)+'%' : '—';
+  const iTotal = (p.italianaWins||0) + (p.italianaLosses||0);
+  const iRate = iTotal ? (((p.italianaWins||0)/iTotal)*100).toFixed(1)+'%' : '—';
+  const aTotal = (p.apostaWins||0) + (p.apostaLosses||0);
+  const aRate = aTotal ? (((p.apostaWins||0)/aTotal)*100).toFixed(1)+'%' : '—';
+  const html = '<button class="modal-close" onclick="closeModal()">&times;</button>' +
+    '<h2 class="section-title">'+escapeHtml(p.name)+'</h2>' +
+    '<h3 class="section-title" style="font-size:16px;">Sobe e Desce</h3>' +
+    '<p>Jogos totais: <strong>'+total+'</strong></p>' +
+    '<p>Jogos ganhos: <strong>'+p.wins+'</strong></p>' +
+    '<p>Win rate: <strong>'+rate+'</strong></p>' +
+    '<h3 class="section-title" style="font-size:16px;">Sueca</h3>' +
+    '<p>Jogos totais: <strong>'+sTotal+'</strong></p>' +
+    '<p>Jogos ganhos: <strong>'+(p.suecaWins||0)+'</strong></p>' +
+    '<p>Win rate: <strong>'+sRate+'</strong></p>' +
+    '<h3 class="section-title" style="font-size:16px;">Sueca Italiana</h3>' +
+    '<p>Jogos totais: <strong>'+iTotal+'</strong></p>' +
+    '<p>Jogos ganhos: <strong>'+(p.italianaWins||0)+'</strong></p>' +
+    '<p>Win rate: <strong>'+iRate+'</strong></p>' +
+    '<h3 class="section-title" style="font-size:16px;">Apostas</h3>' +
+    '<p>Jogos totais: <strong>'+aTotal+'</strong></p>' +
+    '<p>Jogos ganhos: <strong>'+(p.apostaWins||0)+'</strong></p>' +
+    '<p>Win rate: <strong>'+aRate+'</strong></p>';
+  openModal(html);
+}
+
+/* ---------- HISTORY VIEW ---------- */
+function renderHistory(){
+  const wrap = document.getElementById('history-list');
+  const combined = [
+    ...DB.games.map(g=>Object.assign({}, g, { _type:'sobe' })),
+    ...DB.suecaGames.map(g=>Object.assign({}, g, { _type:'sueca' })),
+    ...DB.suecaItalianaGames.map(g=>Object.assign({}, g, { _type:'italiana' })),
+    ...DB.apostaGames.map(g=>Object.assign({}, g, { _type:'aposta' }))
+  ];
+  if(combined.length===0){
+    wrap.innerHTML = '<p class="empty-note">Ainda não há jogos registados.</p>';
+    return;
+  }
+  const sorted = combined.sort((a,b)=> new Date(b.date) - new Date(a.date));
+  wrap.innerHTML = sorted.map(g=>{
+    const d = new Date(g.date);
+    const dateStr = d.toLocaleDateString('pt-PT', {day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    if(g._type === 'sobe'){
+      const names = g.playerIds.map(id=>getPlayerName(id)).join(', ');
+      const winner = getPlayerName(g.winnerId);
+      return '<div class="history-item" onclick="openGameDetail(\''+g.id+'\',\'sobe\')">' +
+        '<div><div class="h-date">'+dateStr+' &middot; Sobe e Desce</div><div class="h-players">'+escapeHtml(names)+'</div></div>' +
+        '<div class="h-winner">&#127942; '+escapeHtml(winner)+'</div></div>';
+    }
+    if(g._type === 'sueca'){
+      const namesA = g.teamA.playerIds.map(id=>getPlayerName(id)).join(' &amp; ');
+      const namesB = g.teamB.playerIds.map(id=>getPlayerName(id)).join(' &amp; ');
+      const winnerTeam = g.winner==='A' ? g.teamA : g.teamB;
+      return '<div class="history-item" onclick="openGameDetail(\''+g.id+'\',\'sueca\')">' +
+        '<div><div class="h-date">'+dateStr+' &middot; Sueca</div><div class="h-players">'+escapeHtml(g.teamA.name)+' ('+escapeHtml(namesA)+') vs '+escapeHtml(g.teamB.name)+' ('+escapeHtml(namesB)+')</div></div>' +
+        '<div class="h-winner">&#127942; '+escapeHtml(winnerTeam.name)+'</div></div>';
+    }
+    if(g._type === 'italiana'){
+      const teamNames = g.calledTeam.map(id=>getPlayerName(id)).join(' &amp; ');
+      const othersNames = g.players.filter(id=>g.calledTeam.indexOf(id)===-1).map(id=>getPlayerName(id)).join(', ');
+      const winnerLabel = g.winner==='called' ? teamNames : othersNames;
+      return '<div class="history-item" onclick="openGameDetail(\''+g.id+'\',\'italiana\')">' +
+        '<div><div class="h-date">'+dateStr+' &middot; Sueca Italiana &middot; nº '+g.number+'</div><div class="h-players">Chamados: '+escapeHtml(teamNames)+' &middot; Outros: '+escapeHtml(othersNames)+'</div></div>' +
+        '<div class="h-winner">&#127942; '+escapeHtml(winnerLabel)+'</div></div>';
+    }
+    const names = g.playerIds.map(id=>getPlayerName(id)).join(', ');
+    const winnerLabel = g.winnerId ? getPlayerName(g.winnerId) : 'Empate';
+    return '<div class="history-item" onclick="openGameDetail(\''+g.id+'\',\'aposta\')">' +
+      '<div><div class="h-date">'+dateStr+' &middot; Apostas &middot; '+g.startingLives+' vidas</div><div class="h-players">'+escapeHtml(names)+'</div></div>' +
+      '<div class="h-winner">&#127942; '+escapeHtml(winnerLabel)+'</div></div>';
+  }).join('');
+}
+function openGameDetail(id, type){
+  if(type === 'aposta'){
+    const g = DB.apostaGames.find(x=>x.id===id);
+    if(!g) return;
+    const d = new Date(g.date);
+    const dateStr = d.toLocaleDateString('pt-PT') + ' ' + d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    const winnerLabel = g.winnerId ? getPlayerName(g.winnerId) : 'Empate';
+    const html = '<button class="modal-close" onclick="closeModal()">&times;</button>' +
+      '<h2 class="section-title">Apostas de '+dateStr+' <span class="tag">'+g.startingLives+' vidas</span></h2>' +
+      buildApostaLogHTML(g) +
+      '<p>Vencedor: <strong>'+escapeHtml(winnerLabel)+'</strong></p>';
+    openModal(html);
+    return;
+  }
+  if(type === 'italiana'){
+    const g = DB.suecaItalianaGames.find(x=>x.id===id);
+    if(!g) return;
+    const d = new Date(g.date);
+    const dateStr = d.toLocaleDateString('pt-PT') + ' ' + d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    const teamNames = g.calledTeam.map(pid=>getPlayerName(pid)).join(' & ');
+    const others = g.players.filter(pid=>g.calledTeam.indexOf(pid)===-1).map(pid=>getPlayerName(pid)).join(', ');
+    const winnerLabel = g.winner==='called' ? teamNames : others;
+    const html = '<button class="modal-close" onclick="closeModal()">&times;</button>' +
+      '<h2 class="section-title">Sueca Italiana de '+dateStr+' <span class="tag">número '+g.number+'</span></h2>' +
+      '<p>Jogadores: <strong>'+escapeHtml(g.players.map(pid=>getPlayerName(pid)).join(', '))+'</strong></p>' +
+      '<p>Equipa chamada: <strong>'+escapeHtml(teamNames)+'</strong></p>' +
+      '<p>Outros: <strong>'+escapeHtml(others)+'</strong></p>' +
+      '<p>Vencedor: <strong>'+escapeHtml(winnerLabel)+'</strong></p>';
+    openModal(html);
+    return;
+  }
+  if(type === 'sueca'){
+    const g = DB.suecaGames.find(x=>x.id===id);
+    if(!g) return;
+    const d = new Date(g.date);
+    const dateStr = d.toLocaleDateString('pt-PT') + ' ' + d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    const winnerTeam = g.winner==='A' ? g.teamA : g.teamB;
+    const target = g.target || 20;
+    let html = '<button class="modal-close" onclick="closeModal()">&times;</button>' +
+      '<h2 class="section-title">Sueca de '+dateStr+' <span class="tag">até '+target+' riscos</span></h2>';
+    ['A','B'].forEach(key=>{
+      const t = key==='A' ? g.teamA : g.teamB;
+      const names = t.playerIds.map(pid=>getPlayerName(pid)).join(' & ');
+      html += '<p>'+(g.winner===key ? '&#127942; ' : '')+'<strong>'+escapeHtml(t.name)+'</strong> ('+escapeHtml(names)+'): '+t.count+' / '+target+'</p>';
+    });
+    html += '<p>Vencedor: <strong>'+escapeHtml(winnerTeam.name)+'</strong></p>';
+    openModal(html);
+    return;
+  }
+  const g = DB.games.find(x=>x.id===id);
+  if(!g) return;
+  const d = new Date(g.date);
+  const dateStr = d.toLocaleDateString('pt-PT') + ' ' + d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const html = '<button class="modal-close" onclick="closeModal()">&times;</button>' +
+    '<h2 class="section-title">Jogo de '+dateStr+' <span class="tag">'+(g.mode==='rebentar'?'rebentar':'clássico')+', início '+g.startingPoints+'</span></h2>' +
+    buildScoreTableHTML(g) +
+    '<p>Vencedor: <strong>'+escapeHtml(getPlayerName(g.winnerId))+'</strong></p>';
+  openModal(html);
+}
+
+/* ---------- DATA VIEW ---------- */
+function renderDataView(){
+  const wrap = document.getElementById('data-summary');
+  wrap.innerHTML = '<p style="margin:0; color:var(--chalk-dim); font-size:14px;">' +
+    DB.players.length + ' jogador(es) guardado(s) &middot; ' + DB.games.length + ' jogo(s) de Sobe e Desce &middot; ' + DB.suecaGames.length + ' jogo(s) de Sueca &middot; ' + DB.suecaItalianaGames.length + ' jogo(s) de Sueca Italiana &middot; ' + DB.apostaGames.length + ' jogo(s) de Apostas.</p>';
+}
+function clearAllData(){
+  const msg = 'Apagar TODOS os dados guardados neste dispositivo — ' + DB.players.length + ' jogador(es), ' +
+    DB.games.length + ' jogo(s) de Sobe e Desce, ' + DB.suecaGames.length + ' jogo(s) de Sueca, ' + DB.suecaItalianaGames.length + ' jogo(s) de Sueca Italiana e ' + DB.apostaGames.length + ' jogo(s) de Apostas? Esta ação não pode ser desfeita.';
+  showConfirm(msg, function(){
+    DB = { players:[], games:[], suecaGames:[], suecaItalianaGames:[], apostaGames:[] };
+    saveDB();
+    ongoing = null; localStorage.removeItem('sdb_ongoing');
+    ongoingSueca = null; localStorage.removeItem('sdb_sueca_game');
+    itaSession = null; localStorage.removeItem('sdb_italiana_session');
+    ongoingAposta = null; localStorage.removeItem('sdb_aposta_game');
+    renderDataView();
+    renderPlayers();
+    renderHistory();
+    const statusEl = document.getElementById('import-status');
+    statusEl.style.color = 'var(--gold)';
+    statusEl.textContent = 'Todos os dados foram apagados.';
+  });
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const stamp = now.toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'sobe-e-desce-dados-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+function handleImportFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      const imported = JSON.parse(reader.result);
+      let addedPlayers = 0, addedGames = 0, addedSueca = 0, addedItaliana = 0, addedAposta = 0;
+      (imported.players||[]).forEach(p=>{
+        if(!DB.players.find(x=>x.id===p.id)){ DB.players.push(p); addedPlayers++; }
+      });
+      (imported.games||[]).forEach(g=>{
+        if(!DB.games.find(x=>x.id===g.id)){ DB.games.push(g); addedGames++; }
+      });
+      (imported.suecaGames||[]).forEach(g=>{
+        if(!DB.suecaGames.find(x=>x.id===g.id)){ DB.suecaGames.push(g); addedSueca++; }
+      });
+      (imported.suecaItalianaGames||[]).forEach(g=>{
+        if(!DB.suecaItalianaGames.find(x=>x.id===g.id)){ DB.suecaItalianaGames.push(g); addedItaliana++; }
+      });
+      (imported.apostaGames||[]).forEach(g=>{
+        if(!DB.apostaGames.find(x=>x.id===g.id)){ DB.apostaGames.push(g); addedAposta++; }
+      });
+      saveDB();
+      const statusEl = document.getElementById('import-status');
+      statusEl.style.color = 'var(--gold)';
+      statusEl.textContent = 'Importado: ' + addedPlayers + ' jogador(es), ' + addedGames + ' jogo(s) de Sobe e Desce, ' + addedSueca + ' jogo(s) de Sueca, ' + addedItaliana + ' jogo(s) de Sueca Italiana e ' + addedAposta + ' jogo(s) de Apostas adicionados.';
+      renderPlayers(); renderHistory(); renderDataView();
+    }catch(err){
+      const statusEl = document.getElementById('import-status');
+      statusEl.style.color = '#e08a8a';
+      statusEl.textContent = 'Não foi possível importar este ficheiro. Confirma que é um JSON exportado por esta aplicação.';
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+/* ---------- SUECA (equipas) ---------- */
+function loadOngoingSueca(){
+  try{
+    const raw = localStorage.getItem('sdb_sueca_game');
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.teamA || !parsed.teamB){
+      localStorage.removeItem('sdb_sueca_game');
+      return null;
+    }
+    return parsed;
+  }catch(e){ return null; }
+}
+function saveOngoingSueca(){
+  if(ongoingSueca) localStorage.setItem('sdb_sueca_game', JSON.stringify(ongoingSueca));
+  else localStorage.removeItem('sdb_sueca_game');
+}
+let ongoingSueca = loadOngoingSueca();
+let suecaSetup = { teamA:new Set(), teamB:new Set(), nameA:'Equipa 1', nameB:'Equipa 2', target:10 };
+let suecaWarn = '';
+
+function setSuecaSetupName(team, val){
+  if(team==='A') suecaSetup.nameA = val; else suecaSetup.nameB = val;
+}
+function setSuecaTarget(v){
+  suecaSetup.target = v;
+  renderSuecaGameArea();
+}
+function quickAddSuecaPlayer(){
+  const input = document.getElementById('sueca-new-name');
+  const p = addPlayer(input.value);
+  if(p){ input.value=''; renderSuecaGameArea(); }
+}
+function toggleSuecaPlayer(team, id){
+  const mySet = team==='A' ? suecaSetup.teamA : suecaSetup.teamB;
+  const otherSet = team==='A' ? suecaSetup.teamB : suecaSetup.teamA;
+  if(mySet.has(id)){ mySet.delete(id); }
+  else{
+    if(otherSet.has(id) || mySet.size>=2) return;
+    mySet.add(id);
+  }
+  renderSuecaGameArea();
+}
+function renderSuecaPlayerChecks(team){
+  if(DB.players.length===0) return '<p class="empty-note">Sem jogadores ainda — adiciona um em baixo.</p>';
+  const mySet = team==='A' ? suecaSetup.teamA : suecaSetup.teamB;
+  const otherSet = team==='A' ? suecaSetup.teamB : suecaSetup.teamA;
+  return DB.players.map(p=>{
+    const checked = mySet.has(p.id);
+    const disabled = !checked && (otherSet.has(p.id) || mySet.size>=2);
+    return '<label class="check-pill'+(checked?' checked':'')+'"><input type="checkbox" '+(checked?'checked':'')+' '+(disabled?'disabled':'')+' onchange="toggleSuecaPlayer(\''+team+'\',\''+p.id+'\')"> '+escapeHtml(p.name)+'</label>';
+  }).join('');
+}
+function startSuecaGame(){
+  if(suecaSetup.teamA.size!==2 || suecaSetup.teamB.size!==2){
+    suecaWarn = 'Escolhe exatamente 2 jogadores para cada equipa.';
+    renderSuecaGameArea();
+    return;
+  }
+  suecaWarn = '';
+  ongoingSueca = {
+    id: uid(),
+    date: new Date().toISOString(),
+    target: suecaSetup.target,
+    teamA:{ name: suecaSetup.nameA || 'Equipa 1', playerIds: Array.from(suecaSetup.teamA), count:0 },
+    teamB:{ name: suecaSetup.nameB || 'Equipa 2', playerIds: Array.from(suecaSetup.teamB), count:0 },
+    finished:false, winner:null
+  };
+  saveOngoingSueca();
+  renderSuecaGameArea();
+}
+function cancelSuecaGame(){
+  showConfirm('Cancelar este jogo de sueca sem guardar no histórico?', function(){
+    ongoingSueca = null;
+    localStorage.removeItem('sdb_sueca_game');
+    renderSuecaGameArea();
+  });
+}
+function newSuecaGame(){
+  ongoingSueca = null;
+  suecaSetup = { teamA:new Set(), teamB:new Set(), nameA:'Equipa 1', nameB:'Equipa 2', target:10 };
+  renderSuecaGameArea();
+}
+function tapSuecaMark(teamKey, index){
+  if(!ongoingSueca || ongoingSueca.finished) return;
+  const target = ongoingSueca.target || 20;
+  const t = teamKey==='A' ? ongoingSueca.teamA : ongoingSueca.teamB;
+  const markNumber = index + 1;
+  if(markNumber > t.count) t.count = markNumber;
+  else t.count = index;
+  if(t.count < 0) t.count = 0;
+  if(t.count > target) t.count = target;
+  if(t.count >= target){ finalizeSuecaGame(teamKey); }
+  else { saveOngoingSueca(); }
+  renderSuecaGameArea();
+}
+function finalizeSuecaGame(winnerKey){
+  ongoingSueca.finished = true;
+  ongoingSueca.winner = winnerKey;
+  const record = JSON.parse(JSON.stringify(ongoingSueca));
+  DB.suecaGames.push(record);
+  const winTeam = winnerKey==='A' ? ongoingSueca.teamA : ongoingSueca.teamB;
+  const loseTeam = winnerKey==='A' ? ongoingSueca.teamB : ongoingSueca.teamA;
+  winTeam.playerIds.forEach(pid=>{
+    const p = DB.players.find(x=>x.id===pid);
+    if(p) p.suecaWins = (p.suecaWins||0) + 1;
+  });
+  loseTeam.playerIds.forEach(pid=>{
+    const p = DB.players.find(x=>x.id===pid);
+    if(p) p.suecaLosses = (p.suecaLosses||0) + 1;
+  });
+  saveDB();
+  localStorage.removeItem('sdb_sueca_game');
+  renderSuecaRanking();
+}
+function buildSuecaTrack(teamKey){
+  const target = ongoingSueca.target || 20;
+  const t = teamKey==='A' ? ongoingSueca.teamA : ongoingSueca.teamB;
+  const half = Math.ceil(target/2);
+  let marks = '';
+  for(let i=0;i<target;i++){
+    const filled = i < t.count;
+    const milestone = (i+1===half) || (i+1===target);
+    marks += '<div class="sueca-mark'+(filled?' filled':'')+(milestone?' milestone':'')+'" onclick="tapSuecaMark(\''+teamKey+'\','+i+')">'+(i+1)+'</div>';
+  }
+  return marks;
+}
+function buildSuecaTeamHeader(teamKey, game){
+  const t = teamKey==='A' ? game.teamA : game.teamB;
+  const names = t.playerIds.map(id=>getPlayerName(id)).join(' &amp; ');
+  return '<div><div style="font-family:\'Barlow Condensed\',sans-serif; text-transform:uppercase; font-weight:700; font-size:20px; letter-spacing:.03em;">'+escapeHtml(t.name)+'</div>' +
+    '<div style="font-size:13px; color:var(--chalk-dim);">'+names+'</div></div>';
+}
+function buildSuecaSetupHTML(){
+  let html = '<div class="panel"><label class="field-label">Jogo até quantos riscos?</label>' +
+    '<div class="pill-group">' +
+    [5,10,15,20].map(v=>'<div class="pill'+(suecaSetup.target===v?' active':'')+'" onclick="setSuecaTarget('+v+')">'+v+' riscos</div>').join('') +
+    '</div></div>';
+  html += '<div class="panel"><label class="field-label">Nome da Equipa 1</label>' +
+    '<input type="text" value="'+escapeHtml(suecaSetup.nameA)+'" oninput="setSuecaSetupName(\'A\', this.value)" style="margin-bottom:14px; width:100%; max-width:320px;">' +
+    '<label class="field-label">Jogadores da Equipa 1 (escolhe 2)</label><div>'+renderSuecaPlayerChecks('A')+'</div></div>';
+  html += '<div class="panel"><label class="field-label">Nome da Equipa 2</label>' +
+    '<input type="text" value="'+escapeHtml(suecaSetup.nameB)+'" oninput="setSuecaSetupName(\'B\', this.value)" style="margin-bottom:14px; width:100%; max-width:320px;">' +
+    '<label class="field-label">Jogadores da Equipa 2 (escolhe 2)</label><div>'+renderSuecaPlayerChecks('B')+'</div>' +
+    '<div class="inline-add" style="margin-top:12px;"><input type="text" id="sueca-new-name" placeholder="Nome do novo jogador"><button class="btn" onclick="quickAddSuecaPlayer()">+ Adicionar</button></div></div>';
+  if(suecaWarn) html += '<div class="warn">'+suecaWarn+'</div>';
+  html += '<button class="btn btn-gold btn-block" onclick="startSuecaGame()">Começar Jogo</button>';
+  return html;
+}
+function buildSuecaGameHTML(){
+  const target = ongoingSueca.target || 20;
+  let html = '<button class="btn btn-danger" style="margin-bottom:14px;" onclick="cancelSuecaGame()">Cancelar jogo</button>';
+  ['A','B'].forEach(key=>{
+    const t = key==='A' ? ongoingSueca.teamA : ongoingSueca.teamB;
+    html += '<div class="sueca-team"><div class="sueca-head">' + buildSuecaTeamHeader(key, ongoingSueca) +
+      '<span class="sueca-count">'+t.count+' / '+target+'</span></div>' +
+      '<div class="sueca-track">'+buildSuecaTrack(key)+'</div></div>';
+  });
+  return html;
+}
+function buildSuecaFinishedHTML(){
+  const target = ongoingSueca.target || 20;
+  const winTeam = ongoingSueca.winner==='A' ? ongoingSueca.teamA : ongoingSueca.teamB;
+  let html = '<div class="winner-banner">&#127942; '+escapeHtml(winTeam.name)+' venceu o jogo!</div>';
+  ['A','B'].forEach(key=>{
+    const t = key==='A' ? ongoingSueca.teamA : ongoingSueca.teamB;
+    html += '<div class="sueca-team'+(ongoingSueca.winner===key?' won':'')+'"><div class="sueca-head">' + buildSuecaTeamHeader(key, ongoingSueca) +
+      '<span class="sueca-count">'+t.count+' / '+target+'</span></div></div>';
+  });
+  html += '<button class="btn btn-gold btn-block" onclick="newSuecaGame()">Novo Jogo de Sueca</button>';
+  return html;
+}
+function renderSuecaGameArea(){
+  const root = document.getElementById('sueca-game-root');
+  if(ongoingSueca && ongoingSueca.finished){ root.innerHTML = buildSuecaFinishedHTML(); return; }
+  if(ongoingSueca && !ongoingSueca.finished){ root.innerHTML = buildSuecaGameHTML(); return; }
+  root.innerHTML = buildSuecaSetupHTML();
+}
+function renderSuecaRanking(){
+  const wrap = document.getElementById('sueca-rank-wrap');
+  if(DB.players.length===0){ wrap.innerHTML = '<p class="empty-note">Sem jogadores ainda.</p>'; return; }
+  const sorted = [...DB.players].sort((a,b)=>{
+    const ta = (a.suecaWins||0)+(a.suecaLosses||0);
+    const tb = (b.suecaWins||0)+(b.suecaLosses||0);
+    const wa = ta ? (a.suecaWins||0)/ta : -1;
+    const wb = tb ? (b.suecaWins||0)/tb : -1;
+    return wb - wa;
+  });
+  const rows = sorted.map(p=>{
+    const w = p.suecaWins||0, l = p.suecaLosses||0, total = w+l;
+    const rate = total ? ((w/total)*100).toFixed(1)+'%' : '—';
+    return '<tr><td>'+escapeHtml(p.name)+'</td><td class="num">'+w+'</td><td class="num">'+total+'</td><td class="num">'+rate+'</td></tr>';
+  }).join('');
+  wrap.innerHTML = '<table class="rank-table"><thead><tr><th>Jogador</th><th class="num">Vitórias</th><th class="num">Jogos</th><th class="num">Win rate</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function renderSueca(){
+  renderSuecaGameArea();
+  renderSuecaRanking();
+}
+
+/* ---------- SUECA ITALIANA ---------- */
+function loadItaSession(){
+  try{
+    const raw = localStorage.getItem('sdb_italiana_session');
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.players || !parsed.state){
+      localStorage.removeItem('sdb_italiana_session');
+      return null;
+    }
+    return parsed;
+  }catch(e){ return null; }
+}
+function saveItaSession(){
+  if(itaSession) localStorage.setItem('sdb_italiana_session', JSON.stringify(itaSession));
+  else localStorage.removeItem('sdb_italiana_session');
+}
+let itaSession = loadItaSession();
+let itaSetup = { selected:new Set() };
+let itaWarn = '';
+
+function numBadge(n){ return '<span class="suit-badge">'+n+'</span>'; }
+
+function toggleItaPlayer(id){
+  if(itaSetup.selected.has(id)) itaSetup.selected.delete(id);
+  else{
+    if(itaSetup.selected.size>=5) return;
+    itaSetup.selected.add(id);
+  }
+  renderItalianaGameArea();
+}
+function renderItaPlayerChecks(){
+  if(DB.players.length===0) return '<p class="empty-note">Sem jogadores ainda — adiciona um em baixo.</p>';
+  return DB.players.map(p=>{
+    const checked = itaSetup.selected.has(p.id);
+    const disabled = !checked && itaSetup.selected.size>=5;
+    return '<label class="check-pill'+(checked?' checked':'')+'"><input type="checkbox" '+(checked?'checked':'')+' '+(disabled?'disabled':'')+' onchange="toggleItaPlayer(\''+p.id+'\')"> '+escapeHtml(p.name)+'</label>';
+  }).join('');
+}
+function quickAddItaPlayer(){
+  const input = document.getElementById('ita-new-name');
+  const p = addPlayer(input.value);
+  if(p){ input.value=''; renderItalianaGameArea(); }
+}
+function startItalianaSession(){
+  if(itaSetup.selected.size!==5){
+    itaWarn = 'Escolhe exatamente 5 jogadores.';
+    renderItalianaGameArea();
+    return;
+  }
+  itaWarn = '';
+  itaSession = {
+    players: Array.from(itaSetup.selected),
+    state: 'idle',
+    currentNumber: null,
+    currentTeam: [],
+    roundsPlayed: []
+  };
+  saveItaSession();
+  renderItalianaGameArea();
+}
+function endItalianaSession(){
+  showConfirm('Terminar esta sessão de Sueca Italiana? Todas as rondas já jogadas ficam guardadas no histórico.', function(){
+    itaSession = null;
+    localStorage.removeItem('sdb_italiana_session');
+    itaSetup = { selected:new Set() };
+    renderItalianaGameArea();
+  });
+}
+function startItaRound(){
+  itaSession.state = 'choosing_number';
+  saveItaSession();
+  renderItalianaGameArea();
+}
+function cancelItaRound(){
+  itaSession.state = 'idle';
+  itaSession.currentNumber = null;
+  itaSession.currentTeam = [];
+  saveItaSession();
+  renderItalianaGameArea();
+}
+function chooseItaNumber(n){
+  itaSession.currentNumber = n;
+  itaSession.state = 'choosing_caller';
+  itaSession.currentTeam = [];
+  saveItaSession();
+  renderItalianaGameArea();
+}
+function chooseItaCaller(id){
+  itaSession.currentTeam = [id];
+  itaSession.state = 'choosing_partner';
+  saveItaSession();
+  renderItalianaGameArea();
+}
+function chooseItaPartner(id){
+  itaSession.currentTeam.push(id);
+  itaSession.state = 'choosing_result';
+  saveItaSession();
+  renderItalianaGameArea();
+}
+function chooseItaWinner(side){
+  const teamIds = itaSession.currentTeam.slice();
+  const others = itaSession.players.filter(id=> teamIds.indexOf(id)===-1);
+  const record = {
+    id: uid(),
+    date: new Date().toISOString(),
+    players: itaSession.players.slice(),
+    number: itaSession.currentNumber,
+    calledTeam: teamIds,
+    winner: side
+  };
+  DB.suecaItalianaGames.push(record);
+  const winners = side==='called' ? teamIds : others;
+  const losers = side==='called' ? others : teamIds;
+  winners.forEach(pid=>{
+    const p = DB.players.find(x=>x.id===pid);
+    if(p) p.italianaWins = (p.italianaWins||0) + 1;
+  });
+  losers.forEach(pid=>{
+    const p = DB.players.find(x=>x.id===pid);
+    if(p) p.italianaLosses = (p.italianaLosses||0) + 1;
+  });
+  saveDB();
+  itaSession.roundsPlayed.push(record);
+  itaSession.state = 'idle';
+  itaSession.currentNumber = null;
+  itaSession.currentTeam = [];
+  saveItaSession();
+  renderItaliana();
+}
+function buildItalianaSessionLogHTML(){
+  if(itaSession.roundsPlayed.length===0) return '<p class="empty-note">Ainda não há rondas jogadas nesta sessão.</p>';
+  const rows = itaSession.roundsPlayed.map((r, idx)=>{
+    const teamNames = r.calledTeam.map(id=>getPlayerName(id)).join(' & ');
+    const winnerLabel = r.winner==='called' ? teamNames : itaSession.players.filter(id=> r.calledTeam.indexOf(id)===-1).map(id=>getPlayerName(id)).join(', ');
+    return '<tr><td>'+(idx+1)+'</td><td class="num">'+numBadge(r.number)+'</td><td>'+escapeHtml(teamNames)+'</td><td>'+escapeHtml(winnerLabel)+'</td></tr>';
+  }).join('');
+  return '<table class="rank-table"><thead><tr><th>Ronda</th><th class="num">Número</th><th>Equipa Chamada</th><th>Vencedor</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function buildItalianaSetupHTML(){
+  let html = '<div class="panel"><label class="field-label">Escolhe exatamente 5 jogadores</label><div>'+renderItaPlayerChecks()+'</div>' +
+    '<div class="inline-add" style="margin-top:12px;"><input type="text" id="ita-new-name" placeholder="Nome do novo jogador"><button class="btn" onclick="quickAddItaPlayer()">+ Adicionar</button></div></div>';
+  if(itaWarn) html += '<div class="warn">'+itaWarn+'</div>';
+  html += '<button class="btn btn-gold btn-block" onclick="startItalianaSession()">Começar Jogo</button>';
+  return html;
+}
+function buildItalianaSessionHTML(){
+  let html = '<div class="panel"><label class="field-label">Jogadores desta sessão</label><p style="margin:0; color:var(--chalk-dim); font-size:14px;">'+escapeHtml(itaSession.players.map(id=>getPlayerName(id)).join(', '))+'</p></div>';
+  html += '<div class="board-wrap">'+buildItalianaSessionLogHTML()+'</div>';
+
+  if(itaSession.state === 'idle'){
+    html += '<div class="btn-row"><button class="btn btn-gold" onclick="startItaRound()">Nova Ronda</button><button class="btn btn-danger" onclick="endItalianaSession()">Terminar Jogo</button></div>';
+  } else if(itaSession.state === 'choosing_number'){
+    html += '<div class="panel"><label class="field-label">A que número vamos jogar?</label><div class="suit-grid">' +
+      [65,70,75,80,85,90,95,100,105,110,115,120].map(n=>'<div class="suit-btn" onclick="chooseItaNumber('+n+')"><span class="name">'+n+'</span></div>').join('') +
+      '</div></div><button class="btn" onclick="cancelItaRound()">Cancelar ronda</button>';
+  } else if(itaSession.state === 'choosing_caller'){
+    html += '<div class="panel"><label class="field-label">Número: '+itaSession.currentNumber+'</label>' +
+      '<label class="field-label">Quem chamou?</label><div class="suit-grid">' +
+      itaSession.players.map(id=>'<div class="suit-btn" onclick="chooseItaCaller(\''+id+'\')"><span class="name">'+escapeHtml(getPlayerName(id))+'</span></div>').join('') +
+      '</div></div><button class="btn" onclick="cancelItaRound()">Cancelar ronda</button>';
+  } else if(itaSession.state === 'choosing_partner'){
+    const callerId = itaSession.currentTeam[0];
+    const remaining = itaSession.players.filter(id=> id!==callerId);
+    html += '<div class="panel"><label class="field-label">Número: '+itaSession.currentNumber+' &middot; Chamou: '+escapeHtml(getPlayerName(callerId))+'</label>' +
+      '<label class="field-label">Depois de jogarem, quem fez dupla com quem chamou?</label><div class="suit-grid">' +
+      remaining.map(id=>'<div class="suit-btn" onclick="chooseItaPartner(\''+id+'\')"><span class="name">'+escapeHtml(getPlayerName(id))+'</span></div>').join('') +
+      '</div></div><button class="btn" onclick="cancelItaRound()">Cancelar ronda</button>';
+  } else if(itaSession.state === 'choosing_result'){
+    const callerId = itaSession.currentTeam[0];
+    const partnerId = itaSession.currentTeam[1];
+    const others = itaSession.players.filter(id=> itaSession.currentTeam.indexOf(id)===-1).map(id=>getPlayerName(id)).join(', ');
+    html += '<div class="panel"><label class="field-label">Número '+itaSession.currentNumber+' &middot; '+escapeHtml(getPlayerName(callerId))+' &amp; '+escapeHtml(getPlayerName(partnerId))+' vs '+escapeHtml(others)+'</label>' +
+      '<div class="suit-grid">' +
+      '<div class="suit-btn" onclick="chooseItaWinner(\'called\')"><span class="name">Ganhou</span></div>' +
+      '<div class="suit-btn" onclick="chooseItaWinner(\'others\')"><span class="name">Perdeu</span></div>' +
+      '</div></div><button class="btn" onclick="cancelItaRound()">Cancelar ronda</button>';
+  }
+  return html;
+}
+function renderItalianaGameArea(){
+  const root = document.getElementById('italiana-game-root');
+  if(itaSession){ root.innerHTML = buildItalianaSessionHTML(); return; }
+  root.innerHTML = buildItalianaSetupHTML();
+}
+function renderItalianaRanking(){
+  const wrap = document.getElementById('italiana-rank-wrap');
+  if(DB.players.length===0){ wrap.innerHTML = '<p class="empty-note">Sem jogadores ainda.</p>'; return; }
+  const sorted = [...DB.players].sort((a,b)=>{
+    const ta = (a.italianaWins||0)+(a.italianaLosses||0);
+    const tb = (b.italianaWins||0)+(b.italianaLosses||0);
+    const wa = ta ? (a.italianaWins||0)/ta : -1;
+    const wb = tb ? (b.italianaWins||0)/tb : -1;
+    return wb - wa;
+  });
+  const rows = sorted.map(p=>{
+    const w = p.italianaWins||0, l = p.italianaLosses||0, total = w+l;
+    const rate = total ? ((w/total)*100).toFixed(1)+'%' : '—';
+    return '<tr><td>'+escapeHtml(p.name)+'</td><td class="num">'+w+'</td><td class="num">'+total+'</td><td class="num">'+rate+'</td></tr>';
+  }).join('');
+  wrap.innerHTML = '<table class="rank-table"><thead><tr><th>Jogador</th><th class="num">Vitórias</th><th class="num">Jogos</th><th class="num">Win rate</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function renderItaliana(){
+  renderItalianaGameArea();
+  renderItalianaRanking();
+}
+
+/* ---------- APOSTAS ---------- */
+const APOSTA_CARD_PATTERN = [1,2,3,4,5,6,5,4,3,2];
+function cardsForRound(roundNumber){
+  return APOSTA_CARD_PATTERN[(roundNumber-1) % APOSTA_CARD_PATTERN.length];
+}
+function loadOngoingAposta(){
+  try{
+    const raw = localStorage.getItem('sdb_aposta_game');
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !parsed.phase || !parsed.currentBids || !parsed.currentActuals || !parsed.lives){
+      localStorage.removeItem('sdb_aposta_game');
+      return null;
+    }
+    return parsed;
+  }catch(e){ return null; }
+}
+function saveOngoingAposta(){
+  if(ongoingAposta) localStorage.setItem('sdb_aposta_game', JSON.stringify(ongoingAposta));
+  else localStorage.removeItem('sdb_aposta_game');
+}
+let ongoingAposta = loadOngoingAposta();
+let apostaSetup = { selected:new Set(), lives:3 };
+let apostaWarn = '';
+
+function toggleApostaPlayer(id){
+  if(apostaSetup.selected.has(id)) apostaSetup.selected.delete(id);
+  else apostaSetup.selected.add(id);
+  renderApostaGameArea();
+}
+function renderApostaPlayerChecks(){
+  if(DB.players.length===0) return '<p class="empty-note">Sem jogadores ainda — adiciona um em baixo.</p>';
+  return DB.players.map(p=>{
+    const checked = apostaSetup.selected.has(p.id);
+    return '<label class="check-pill'+(checked?' checked':'')+'"><input type="checkbox" '+(checked?'checked':'')+' onchange="toggleApostaPlayer(\''+p.id+'\')"> '+escapeHtml(p.name)+'</label>';
+  }).join('');
+}
+function quickAddApostaPlayer(){
+  const input = document.getElementById('aposta-new-name');
+  const p = addPlayer(input.value);
+  if(p){ input.value=''; renderApostaGameArea(); }
+}
+function setApostaLives(v){
+  apostaSetup.lives = v;
+  renderApostaGameArea();
+}
+function startApostaGame(){
+  if(apostaSetup.selected.size < 2){
+    apostaWarn = 'Escolhe pelo menos 2 jogadores.';
+    renderApostaGameArea();
+    return;
+  }
+  apostaWarn = '';
+  const playerIds = Array.from(apostaSetup.selected);
+  const lives = {};
+  playerIds.forEach(id=>{ lives[id] = apostaSetup.lives; });
+  ongoingAposta = {
+    id: uid(),
+    date: new Date().toISOString(),
+    playerIds,
+    startingLives: apostaSetup.lives,
+    lives,
+    roundNumber: 1,
+    rounds: [],
+    phase: 'bidding',
+    currentBids: {},
+    currentActuals: {},
+    finished: false,
+    winnerId: null
+  };
+  saveOngoingAposta();
+  renderApostaGameArea();
+}
+function getActiveApostaPlayers(){
+  return ongoingAposta.playerIds.filter(pid=> ongoingAposta.lives[pid] > 0);
+}
+function apostaAllBidsSet(){
+  return getActiveApostaPlayers().every(pid=> ongoingAposta.currentBids[pid] !== undefined);
+}
+function setApostaBid(pid, value){
+  ongoingAposta.currentBids[pid] = value;
+  saveOngoingAposta();
+  renderApostaGameArea();
+}
+function proceedToApostaResults(){
+  if(!apostaAllBidsSet()) return;
+  ongoingAposta.phase = 'results';
+  ongoingAposta.currentActuals = {};
+  saveOngoingAposta();
+  renderApostaGameArea();
+}
+function apostaActualUsedExcluding(pid){
+  let total = 0;
+  Object.keys(ongoingAposta.currentActuals).forEach(k=>{
+    if(k===pid) return;
+    total += ongoingAposta.currentActuals[k];
+  });
+  return total;
+}
+function apostaActualUsedAll(){
+  let total = 0;
+  Object.values(ongoingAposta.currentActuals).forEach(v=>{ total += v; });
+  return total;
+}
+function apostaAllActualsSet(){
+  return getActiveApostaPlayers().every(pid=> ongoingAposta.currentActuals[pid] !== undefined);
+}
+function setApostaActual(pid, value){
+  const N = cardsForRound(ongoingAposta.roundNumber);
+  const remaining = N - apostaActualUsedExcluding(pid);
+  if(value > remaining) return;
+  ongoingAposta.currentActuals[pid] = value;
+  if(apostaActualUsedAll() >= N){
+    getActiveApostaPlayers().forEach(id=>{
+      if(ongoingAposta.currentActuals[id] === undefined) ongoingAposta.currentActuals[id] = 0;
+    });
+  }
+  saveOngoingAposta();
+  renderApostaGameArea();
+}
+function cancelApostaGame(){
+  showConfirm('Cancelar este jogo de Apostas sem guardar no histórico?', function(){
+    ongoingAposta = null;
+    localStorage.removeItem('sdb_aposta_game');
+    renderApostaGameArea();
+  });
+}
+function finishApostaRound(){
+  if(!apostaAllActualsSet()) return;
+  const N = cardsForRound(ongoingAposta.roundNumber);
+  const activeIds = getActiveApostaPlayers();
+  const bids = ongoingAposta.currentBids;
+  const actuals = ongoingAposta.currentActuals;
+  activeIds.forEach(pid=>{
+    if(actuals[pid] !== bids[pid]){
+      ongoingAposta.lives[pid] = Math.max(0, ongoingAposta.lives[pid] - 1);
+    }
+  });
+  ongoingAposta.rounds.push({
+    roundNumber: ongoingAposta.roundNumber,
+    cards: N,
+    bids: Object.assign({}, bids),
+    actuals: Object.assign({}, actuals),
+    livesAfter: Object.assign({}, ongoingAposta.lives)
+  });
+  ongoingAposta.roundNumber += 1;
+  ongoingAposta.currentBids = {};
+  ongoingAposta.currentActuals = {};
+  ongoingAposta.phase = 'bidding';
+
+  const stillActive = ongoingAposta.playerIds.filter(pid=> ongoingAposta.lives[pid] > 0);
+  if(stillActive.length <= 1){
+    ongoingAposta.finished = true;
+    ongoingAposta.winnerId = stillActive.length===1 ? stillActive[0] : null;
+    const record = JSON.parse(JSON.stringify(ongoingAposta));
+    DB.apostaGames.push(record);
+    if(ongoingAposta.winnerId){
+      ongoingAposta.playerIds.forEach(pid=>{
+        const p = DB.players.find(x=>x.id===pid);
+        if(!p) return;
+        if(pid===ongoingAposta.winnerId) p.apostaWins = (p.apostaWins||0) + 1;
+        else p.apostaLosses = (p.apostaLosses||0) + 1;
+      });
+    }
+    saveDB();
+    localStorage.removeItem('sdb_aposta_game');
+  } else {
+    saveOngoingAposta();
+  }
+  renderAposta();
+}
+function newApostaGame(){
+  ongoingAposta = null;
+  apostaSetup = { selected:new Set(), lives:3 };
+  renderApostaGameArea();
+}
+function buildHearts(lives, startingLives){
+  let html = '';
+  for(let i=0;i<startingLives;i++){
+    html += '<span class="heart '+(i<lives?'filled':'empty')+'">&#10084;</span>';
+  }
+  return html;
+}
+function buildApostaLogHTML(game){
+  if(!game.rounds || game.rounds.length===0) return '<p class="empty-note">Ainda não há rondas jogadas.</p>';
+  const header = '<tr><th>Ronda</th><th class="num">Cartas</th>' + game.playerIds.map(id=>'<th>'+escapeHtml(getPlayerName(id))+'</th>').join('') + '</tr>';
+  const rows = game.rounds.map(r=>{
+    const cells = game.playerIds.map(pid=>{
+      const bid = r.bids[pid];
+      const actual = r.actuals[pid];
+      if(bid===undefined || actual===undefined) return '<td>—</td>';
+      const matched = bid===actual;
+      return '<td>'+bid+'&rarr;'+actual+(matched?'':' &#128148;')+'</td>';
+    }).join('');
+    return '<tr><td>'+r.roundNumber+'</td><td class="num">'+r.cards+'</td>'+cells+'</tr>';
+  }).join('');
+  return '<div class="board-wrap"><table class="score-table"><thead>'+header+'</thead><tbody>'+rows+'</tbody></table></div>';
+}
+function buildApostaSetupHTML(){
+  let html = '<div class="panel"><label class="field-label">Jogadores (quantos quiseres)</label><div>'+renderApostaPlayerChecks()+'</div>' +
+    '<div class="inline-add" style="margin-top:12px;"><input type="text" id="aposta-new-name" placeholder="Nome do novo jogador"><button class="btn" onclick="quickAddApostaPlayer()">+ Adicionar</button></div></div>';
+  html += '<div class="panel"><label class="field-label">Vidas por jogador</label><div class="pill-group">' +
+    [3,5].map(v=>'<div class="pill'+(apostaSetup.lives===v?' active':'')+'" onclick="setApostaLives('+v+')">'+v+' vidas</div>').join('') +
+    '</div></div>';
+  if(apostaWarn) html += '<div class="warn">'+apostaWarn+'</div>';
+  html += '<button class="btn btn-gold btn-block" onclick="startApostaGame()">Começar Jogo</button>';
+  return html;
+}
+function buildApostaGameHTML(){
+  const N = cardsForRound(ongoingAposta.roundNumber);
+  const activeIds = getActiveApostaPlayers();
+  const eliminatedIds = ongoingAposta.playerIds.filter(pid=> ongoingAposta.lives[pid] <= 0);
+  let html = '<button class="btn btn-danger" style="margin-bottom:14px;" onclick="cancelApostaGame()">Cancelar jogo</button>';
+  html += buildApostaLogHTML(ongoingAposta);
+  if(eliminatedIds.length){
+    html += '<p class="eliminated-note">Eliminados: '+escapeHtml(eliminatedIds.map(id=>getPlayerName(id)).join(', '))+'</p>';
+  }
+  html += '<div class="panel"><label class="field-label">Ronda '+ongoingAposta.roundNumber+' &middot; '+N+' carta'+(N>1?'s':'')+' por jogador</label></div>';
+
+  if(ongoingAposta.phase === 'bidding'){
+    activeIds.forEach(pid=>{
+      const bid = ongoingAposta.currentBids[pid];
+      const lives = ongoingAposta.lives[pid];
+      html += '<div class="entry-card"><div class="p-name">'+escapeHtml(getPlayerName(pid))+' '+buildHearts(lives, ongoingAposta.startingLives)+'</div>' +
+        '<div class="p-score">Quantos pontos achas que vais fazer?</div><div class="choice-row">';
+      for(let k=0;k<=N;k++){
+        const selected = bid===k;
+        html += '<button class="choice-btn'+(selected?' selected':'')+'" onclick="setApostaBid(\''+pid+'\','+k+')">'+k+'</button>';
+      }
+      html += '</div></div>';
+    });
+    const canProceed = apostaAllBidsSet();
+    html += '<button class="btn btn-gold btn-block" '+(canProceed?'':'disabled')+' onclick="proceedToApostaResults()">Já jogámos, marcar resultados</button>';
+  } else {
+    activeIds.forEach(pid=>{
+      const bid = ongoingAposta.currentBids[pid];
+      const actual = ongoingAposta.currentActuals[pid];
+      const remaining = N - apostaActualUsedExcluding(pid);
+      const lives = ongoingAposta.lives[pid];
+      html += '<div class="entry-card"><div class="p-name">'+escapeHtml(getPlayerName(pid))+' '+buildHearts(lives, ongoingAposta.startingLives)+'</div>' +
+        '<div class="p-score">Apostou: '+bid+'</div><div class="choice-row">';
+      for(let k=0;k<=N;k++){
+        const disabled = k > remaining;
+        const selected = actual===k;
+        html += '<button class="choice-btn'+(selected?' selected':'')+'" '+(disabled?'disabled':'')+' onclick="setApostaActual(\''+pid+'\','+k+')">'+k+'</button>';
+      }
+      html += '</div></div>';
+    });
+    const canFinish = apostaAllActualsSet();
+    html += '<button class="btn btn-gold btn-block" '+(canFinish?'':'disabled')+' onclick="finishApostaRound()">Ronda Terminada</button>';
+  }
+  return html;
+}
+function buildApostaFinishedHTML(){
+  let html = buildApostaLogHTML(ongoingAposta);
+  if(ongoingAposta.winnerId){
+    html += '<div class="winner-banner">&#127942; '+escapeHtml(getPlayerName(ongoingAposta.winnerId))+' venceu o jogo!</div>';
+  } else {
+    html += '<div class="winner-banner">Empate — mais do que um jogador ficou sem vidas na mesma ronda.</div>';
+  }
+  html += '<button class="btn btn-gold btn-block" onclick="newApostaGame()">Novo Jogo de Apostas</button>';
+  return html;
+}
+function renderApostaGameArea(){
+  const root = document.getElementById('aposta-game-root');
+  if(ongoingAposta && ongoingAposta.finished){ root.innerHTML = buildApostaFinishedHTML(); return; }
+  if(ongoingAposta && !ongoingAposta.finished){ root.innerHTML = buildApostaGameHTML(); return; }
+  root.innerHTML = buildApostaSetupHTML();
+}
+function renderApostaRanking(){
+  const wrap = document.getElementById('aposta-rank-wrap');
+  if(DB.players.length===0){ wrap.innerHTML = '<p class="empty-note">Sem jogadores ainda.</p>'; return; }
+  const sorted = [...DB.players].sort((a,b)=>{
+    const ta = (a.apostaWins||0)+(a.apostaLosses||0);
+    const tb = (b.apostaWins||0)+(b.apostaLosses||0);
+    const wa = ta ? (a.apostaWins||0)/ta : -1;
+    const wb = tb ? (b.apostaWins||0)/tb : -1;
+    return wb - wa;
+  });
+  const rows = sorted.map(p=>{
+    const w = p.apostaWins||0, l = p.apostaLosses||0, total = w+l;
+    const rate = total ? ((w/total)*100).toFixed(1)+'%' : '—';
+    return '<tr><td>'+escapeHtml(p.name)+'</td><td class="num">'+w+'</td><td class="num">'+total+'</td><td class="num">'+rate+'</td></tr>';
+  }).join('');
+  wrap.innerHTML = '<table class="rank-table"><thead><tr><th>Jogador</th><th class="num">Vitórias</th><th class="num">Jogos</th><th class="num">Win rate</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function renderAposta(){
+  renderApostaGameArea();
+  renderApostaRanking();
+}
+
+/* ---------- MODAL ---------- */
+function openModal(html){
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+function showConfirm(message, onYes){
+  const html = '<p style="margin-top:0;">'+escapeHtml(message)+'</p>' +
+    '<div class="btn-row" style="margin-top:16px;">' +
+    '<button class="btn btn-danger" id="confirm-yes-btn">Sim, confirmar</button>' +
+    '<button class="btn" onclick="closeModal()">Cancelar</button>' +
+    '</div>';
+  openModal(html);
+  document.getElementById('confirm-yes-btn').onclick = function(){
+    closeModal();
+    onYes();
+  };
+}
+
+/* ---------- UTIL ---------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+/* ---------- INIT ---------- */
+function init(){
+  if(ongoing && !ongoing.finished){
+    renderGame();
+    showView('view-game');
+  } else {
+    showView('view-home');
+  }
+}
+init();
+</script>
+</body>
+</html>

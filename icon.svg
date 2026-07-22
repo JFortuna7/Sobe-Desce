@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f6444"/>
+      <stop offset="55%" stop-color="#164a34"/>
+      <stop offset="100%" stop-color="#0f3324"/>
+    </linearGradient>
+    <linearGradient id="cardface" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#faf7ee"/>
+      <stop offset="100%" stop-color="#f0ead9"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <g transform="rotate(-15 190 250)">
+    <rect x="70" y="95" width="220" height="304" rx="26" fill="url(#cardface)" stroke="#a9791f" stroke-width="9"/>
+    <text x="180" y="292" font-family="Georgia, 'Times New Roman', serif" font-size="168" text-anchor="middle" fill="#0f3324">&#9824;</text>
+  </g>
+
+  <g transform="rotate(13 340 255)">
+    <rect x="228" y="98" width="220" height="304" rx="26" fill="url(#cardface)" stroke="#a9791f" stroke-width="9"/>
+    <text x="338" y="295" font-family="Georgia, 'Times New Roman', serif" font-size="168" text-anchor="middle" fill="#c1394d">&#9829;</text>
+  </g>
+</svg>
